@@ -195,3 +195,16 @@ TARGETS = {
 
 # Shading: a crown within this distance of the centreline still shades the path (m)
 SHADE_REACH_M = 2.0
+
+# =============================================================================
+# 14. 3D vegetation models on the map (backend/view.py, scripts/make_vegetation_models.py)
+# =============================================================================
+# Low-poly symbols, not species. The map scales each model so its crown matches the tree's crown radius.
+USE_3D_MODELS = True            # False: draw trees as columns and existing canopy as flat discs (faster)
+VEG_MODEL_DIR = "data/processed/vegetation_models"
+TREE_MODEL = {"large": "large_tree", "medium": "large_tree", "small": "small_tree"}   # size class -> model
+EXISTING_TREE_MODEL = "large_tree"   # RIVM canopy cells; height follows the crown, so it is INDICATIVE
+UNDERSTOREY_VEG_SPACING_M = 4.0      # one low-vegetation patch (2 x 2 m) per this spacing on open ground. STARTING VALUE
+UNDERSTOREY_BUSH_SPACING_M = 10.0    # one medium bush per this spacing on open ground. STARTING VALUE
+UNDERSTOREY_CLEAR_OF_TRUNK_M = 2.0   # no bush or patch drawn within crown radius + this of a tree. Display only
+

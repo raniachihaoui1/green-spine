@@ -37,7 +37,7 @@ KPI_LABELS = {
     "natural_soil_pct": ("Trees in real soil", "%", "Trees that need no engineered soil"),
 }
 GREEN, GREY = "#2EA043", "#8C959F"
-LAYER_DEFAULT = ["buildings", "corridor", "canopy", "roads", "facades", "structures"]
+LAYER_DEFAULT = ["buildings", "corridor", "canopy", "roads", "facades", "structures", "understorey"]
 
 
 # ---------------- cached computation ----------------
@@ -182,8 +182,9 @@ with col_map:
     layers = build_layers(L, grid0, trees, year, show, canopies["geom"], pergola, S, G["bands"])
     st.pydeck_chart(pdk.Deck(layers=layers, map_style="light", initial_view_state=view_state(L),
                              tooltip={"text": "{label}"}), height=520)
-    st.caption("Trees: green = plant now, magenta = needs engineered soil. Grey-green discs: existing trees. "
-               "Dark green walls: climbers. Blue: wind canopies. Orange: road pergola. Hover for details.")
+    st.caption("New trees: green = plant now, magenta = needs engineered soil. Grey-green: existing trees kept (RIVM 2022, "
+               "height indicative); red: existing trees cleared for a new tree. Light green: shrubs and low vegetation on open "
+               "ground (indicative). Dark green walls: climbers. Blue: wind canopies. Orange: road pergola. Hover for details.")
 
     kc = st.columns(4)
     for col, (key, (label, unit, helptext)) in zip(kc, KPI_LABELS.items()):

@@ -2,7 +2,7 @@
 
 The map has no individual trees, species or heights. Each 10 m cell becomes one 'canopy cell':
 a disc at the cell centre whose area equals the covered area (cover% x 100 m2), so a 100 % cell
-is a disc of r = 5.6 m. Prepared by tools/clip_bomenkaart.py.
+is a disc of r = 5.6 m. Prepared by scripts/clip_bomenkaart.py.
 """
 from pathlib import Path
 

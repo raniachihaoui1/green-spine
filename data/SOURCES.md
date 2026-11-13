@@ -28,6 +28,7 @@ Not stored as raw files: the national RIVM Bomenkaart 2022 (too large; [Atlas Na
 | `fellenoord_compatible_plants.csv` | 680 plants whose soil needs match at least one borehole | `python -m backend.soil` |
 | `plants.csv` | The 20 native species the app plants | Team, by hand |
 | `plants_candidates.csv` | The 75 database trees, for the team to mark as native | `scripts/build_plants.py` |
+| `vegetation_models/` | Low-poly 3D symbols: large tree (20 m), small tree (8 m), medium bush (2 m), low vegetation (2 × 2 m patch); .obj, .glb and `models.json` with the reference sizes. Symbols, not species | `scripts/make_vegetation_models.py` |
 | `fetch_report.md` | Counts and assumptions of the last download (written on the next run) | `scripts/fetch_data.py` |
 
 ## Assumptions in the downloaded layers (from the 13 November run)

@@ -1,0 +1,96 @@
+{
+  "large_tree": {
+    "height_m": 20.0,
+    "crown_d_m": 12.0,
+    "size_class": "large",
+    "faces": 668,
+    "bounds_m": [
+      [
+        -6.48,
+        -6.46,
+        0.0
+      ],
+      [
+        6.28,
+        6.21,
+        19.43
+      ]
+    ],
+    "files": [
+      "large_tree.obj",
+      "large_tree.glb",
+      "large_tree_foliage.glb",
+      "large_tree_trunk.glb"
+    ]
+  },
+  "small_tree": {
+    "height_m": 8.0,
+    "crown_d_m": 5.0,
+    "size_class": "small",
+    "faces": 348,
+    "bounds_m": [
+      [
+        -2.64,
+        -2.59,
+        0.0
+      ],
+      [
+        2.66,
+        2.66,
+        8.16
+      ]
+    ],
+    "files": [
+      "small_tree.obj",
+      "small_tree.glb",
+      "small_tree_foliage.glb",
+      "small_tree_trunk.glb"
+    ]
+  },
+  "medium_bush": {
+    "height_m": 2.0,
+    "crown_d_m": 3.0,
+    "size_class": "bush",
+    "faces": 480,
+    "bounds_m": [
+      [
+        -1.51,
+        -1.5,
+        -0.02
+      ],
+      [
+        1.68,
+        1.4,
+        1.77
+      ]
+    ],
+    "files": [
+      "medium_bush.obj",
+      "medium_bush.glb",
+      "medium_bush_foliage.glb"
+    ]
+  },
+  "low_vegetation": {
+    "height_m": 0.5,
+    "crown_d_m": 2.0,
+    "size_class": "vegetation",
+    "faces": 312,
+    "bounds_m": [
+      [
+        -1.0,
+        -1.0,
+        0.0
+      ],
+      [
+        1.05,
+        1.0,
+        0.5
+      ]
+    ],
+    "files": [
+      "low_vegetation.obj",
+      "low_vegetation.glb",
+      "low_vegetation_foliage.glb"
+    ]
+  }
+}

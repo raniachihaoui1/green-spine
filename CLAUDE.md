@@ -38,9 +38,10 @@ Pitch: corridors succeed above ground and fail below it, and most schemes never 
 | `backend/demo_data.py` | Synthetic corridor, buildings, road, trees (indicative only) |
 | `backend/model.py` | Base grid (sun, canopy protection, nearest borehole) → setback mask → score → place → soil-matched species → growth → KPIs |
 | `backend/cover.py` | Building canopies and road pergola geometry |
+| `backend/scenarios.py` | Existing / masterplan / scenario metrics on one scale, for the global tabs and the performance chart |
 | `backend/metrics/` | One module + one .md per metric: covered ground (CANOPY.md), ecosystem/synergy (ECOSYSTEM_SCORE.md), heat stress (HEAT_STRESS.md), wind index (WIND_INDEX.md) |
-| `backend/view.py` | pydeck map layers |
-| `scripts/` | Data preparation: `fetch_data.py`, `clip_bomenkaart.py`, `build_plants.py` |
+| `backend/view.py` | pydeck map layers; trees, existing canopy and understorey as 3D models (ScenegraphLayer) |
+| `scripts/` | Data preparation: `fetch_data.py`, `clip_bomenkaart.py`, `build_plants.py`, `make_vegetation_models.py` |
 | `data/raw/`, `data/processed/`, `data/SOURCES.md` | Raw inputs (read-only), app inputs, and the list of both |
 | `docs/` | Project scope, log, dashboard prompt |
 
@@ -106,6 +107,8 @@ Counted inside the corridor:
 - KPIs live: canopy cover, shaded route, longest gap, trees in natural soil (KPI bar under the map, with progress to target); synergy index (ecosystem score), heat stress (route shade at 15:00), wind index, existing canopy kept, canopy growth chart, species mix, engineered soil, largest species share; covered-ground panel.
 - Species are matched to the soil at the nearest usable BRO borehole (score ≥ `SOIL_MIN_COMPATIBILITY`); balance (10-20-30) first, soil fit as tiebreak, because the fit scores of the starter species are almost equal (0.91–0.92).
 - Exports: planting schedule CSV, KPI JSON.
+- Global tabs: **1 Existing situation** (today: no new trees, no built shelter), **2 Masterplan** (wind canopies + new road with green pergola; indicative, today's road outline until masterplan road geometry exists; holds the built-shelter panel), **3 Planting scenarios** with A / B / C / Custom as sub-options, a performance chart (Existing, Masterplan, A, B, C on six 0–100 metrics with target ticks), tree cover over time per scenario and a table view. The input column is shared by all tabs.
+- 3D map: new trees, existing RIVM canopy and indicative shrubs / low vegetation on open ground are drawn as low-poly models (`data/processed/vegetation_models/`), scaled to the crown radius of the selected year. Existing canopy is grey-green when kept and red when cleared for a new tree. `USE_3D_MODELS = False` in `parameters.py` falls back to columns and discs.
 
 ## 6. Full specification (merged from `GreenSpine_dashboard_prompt.md`)
 
@@ -263,3 +266,5 @@ Put these in `data/processed/` (EPSG:28992); `scripts/fetch_data.py` writes all 
 | 13 Nov 2026 | Dashboard rebuilt to the Miro hierarchy (three columns), map layers in `backend/view.py`, Transparency panel. |
 | 13 Nov 2026 | Green facades (`backend/facades.py`, GREEN_FACADES.md): climbers from the soil-compatible list on street walls, sunniest first, matched to sun per floor band. Rain kept on site (`backend/metrics/water.py`, WATER.md). Dashboard simplified: 1 Choose / 2 See / 3 Results, six headline numbers, details in tabs, expert settings under Advanced. |
 | 13 Nov 2026 | Santamour's 10-20-30 rule enforced (`ENFORCE_10_20_30`, Inputs switch): limits rounded down; a tree changes size class (smaller first, larger only if spacing allows) rather than break the rule. Met for all options at 20–200 trees; costs 1–4 points of canopy in 2040. New 10-20-30 table in Outputs; `class_changed_for_10_20_30` column in the schedule. |
+| 13 Nov 2026 | 3D vegetation models: `scripts/make_vegetation_models.py` writes large tree, small tree, medium bush and low vegetation (.obj, .glb, plus white `_foliage` / `_trunk` .glb for the map) to `data/processed/vegetation_models/`. `backend/view.py` draws new trees (large and medium → large_tree, small → small_tree), existing canopy (kept grey-green, cleared red) and indicative understorey on open ground with ScenegraphLayer; models are sent inline as data URIs (no static serving), coloured with `get_color`. New map layer "Shrubs and low vegetation (indicative)"; parameters in `parameters.py` section 14. |
+| 13 Nov 2026 | Global tabs: Existing situation, Masterplan (wind canopies + new road with pergola), Planting scenarios (A/B/C sub-options) with a scenario performance chart. New `backend/scenarios.py`; the built-shelter expander moved into the Masterplan tab. |

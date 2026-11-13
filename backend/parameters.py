@@ -52,6 +52,10 @@ TREE_SETBACK_BUILDING_M = 5.0
 TREE_SETBACK_ROAD_M = 2.0
 TREE_AVOID_CANOPIES = True     # no new trunk under a building canopy (crown would clash)
 
+# Existing canopy (RIVM Bomenkaart 2022, 10 m cells, % cover by trees > 2.5 m)
+CANOPY_MIN_COVER = 10.0        # ignore cells with less tree cover than this (%). STARTING VALUE
+CANOPY_CONTEXT_M = 50.0        # show existing canopy up to this distance outside the corridor (m). STARTING VALUE
+
 # 10-20-30 diversity rule (Santamour): max share per species, genus, family
 MAX_SPECIES, MAX_GENUS, MAX_FAMILY = 0.10, 0.20, 0.30
 

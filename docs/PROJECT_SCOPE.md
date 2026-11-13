@@ -2,7 +2,7 @@
 
 AEC NL Hackathon 2026, Eindhoven. Challenge theme: Green Spine (native planting, urban forest and biodiversity).
 
-This is the single reference for the team: what we are building, what is in and out of scope, what exists, and what is left. It is based on the project log of 13 November 2026, 12:57 ([PROJECT_LOG.md](PROJECT_LOG.md)) and checked against the repo at 13:00 the same day. Where the repo has moved on since the log, this document follows the repo.
+This is the single reference for the team: what we are building, what is in and out of scope, what exists, and what is left. It is based on the project log of 13 November 2026, 12:57 ([PROJECT_LOG.md](PROJECT_LOG.md)) and checked against the repo at 14:15 the same day. Where the repo has moved on since the log, this document follows the repo.
 
 ## 1. The project in one paragraph
 
@@ -19,11 +19,11 @@ Fellenoord is paved and about to be rebuilt. Street-tree schemes often fail belo
 | Area | What we deliver |
 |---|---|
 | Site | One corridor, from Fellenoord to the Dommel, in Eindhoven |
-| Method | A transparent scoring rule on a 2 m grid: heat, soil and gap, each scaled 0 to 1 |
+| Method | A transparent scoring rule on a 2 m grid: heat (direct-sun hours), soil and gap, each scaled 0 to 1 |
 | Options | Three planting strategies: A most shade, B most connected, C lowest cost, plus custom weights |
 | Trees | Three size classes (large, medium, small), species assigned from the plant database, native species |
 | KPIs | Canopy cover, shaded route, longest gap, trees in natural soil |
-| Also reported | Tree count, species count, largest species share (10-20-30 rule), engineered soil volume as a cost proxy |
+| Also reported | Direct-sun hours on the walking route, tree count, species count, largest species share (10-20-30 rule), engineered soil volume as a cost proxy |
 | Time | Results at any year from 2026 to 2060, shown for 2026, 2040 and 2060 |
 | Product | A Streamlit dashboard with a 3D map, option cards, targets table, species mix and a downloadable planting schedule |
 | Pitch | Pitch, a before/after image and a backup video |
@@ -36,22 +36,26 @@ Fellenoord is paved and about to be rebuilt. Street-tree schemes often fail belo
 | Water modelling | Dropped to fit the day |
 | Language-model layer (turning a planner's written goal into weights and explaining the trade-off) | Optional idea, not built |
 | More than one corridor, or the whole station area | Scope was cut when the event was shortened to one day |
-| Measured soil, heat, utilities, traffic and pedestrian-flow data | Not available in time; replaced by the stated fallbacks below |
+| Measured soil, air temperature, utilities, traffic and pedestrian-flow data | Not available in time; replaced by the stated fallbacks below |
+| Rhino Compute, EnergyPlus, three.js | Considered on 13 November and not used: sun hours are computed in the app's own Python code, and the dashboard already has a 3D map |
 
 ### Assumptions we are working with
 
 | Missing data | Fallback used |
 |---|---|
 | Soil | Unpaved ground is good; paved ground needs engineered soil |
-| Heat map | Paved ground far from canopy is hot |
-| Utilities | An assumed utilities strip is removed from the plantable area |
+| Heat | Direct-sun hours on 21 June under a clear sky, with shadows from buildings and existing trees; paving counts fully, open ground half. Air temperature is not modelled |
+| Corridor | A draft: the mid-line of the Fellenoord and Dorgelolaan carriageways, 30 m either side, ending at the Dommel |
+| Roads | Today's layout from OpenStreetMap, not the planned narrower boulevard |
+| Existing tree crowns | Estimated from the municipal height class; the dataset has no crown size |
+| Utilities | No data. The real-data run has no utilities layer at all, so cables and pipes are ignored |
 | Traffic, pedestrian flow | Stated assumptions |
 | Crown growth | Linear from planting size to mature size |
 | Pitch time | Assumed to be 17:00 |
 
 ### Done means
 
-1. The app runs on real Fellenoord data, not the demo corridor.
+1. The app runs on real Fellenoord data, not the demo corridor. **Reached at 14:00, on a draft corridor the architect still has to confirm.**
 2. Tree class values and targets are confirmed by the engineer.
 3. The three options are checked by hand on one block.
 4. The pitch, the before/after image and the backup video are ready.
@@ -62,19 +66,21 @@ Fellenoord is paved and about to be rebuilt. Street-tree schemes often fail belo
 |---|---|
 | Concept, KPIs, algorithm | Agreed |
 | Team split and timeline | On the Miro board |
-| Backend and dashboard | First version runs on demo data |
+| Backend and dashboard | Runs on real Fellenoord data |
+| Sun hours | In the app: per 2 m cell and along the walking route |
 | Environment | `gsenv` on Python 3.13, with setup scripts and pinned versions (see [README](../README.md)) |
-| Git | App and environment setup are committed and pushed to `main`; branch `test_1` is at the same commit. The log said "not committed"; that is out of date |
-| Real data in the app | Not yet: `data/` holds only `plants.csv` |
-| Corridor outline and centreline | Not drawn yet. **This blocks the real-data run** |
+| Git | Sun hours, the data scripts and the real layers are in the working folder on branch `test_1`, not committed yet |
+| Real data in the app | In: buildings (3D BAG), existing trees (Eindhoven open data), roads and green (OpenStreetMap). See [data/SOURCES.md](../data/SOURCES.md) |
+| Corridor outline and centreline | Draft generated from OpenStreetMap. **The architect needs to confirm or redraw it** |
+| Plant database | 55 more tree species extracted to `data/plants_candidates.csv`; none added yet because the database does not say which are native |
 | Tree class numbers | Placeholders in `backend/config.py`, to be confirmed |
 | Pitch and before/after image | Not started |
 
 ### Next three actions
 
-1. Architect draws `corridor.geojson` and `centreline.geojson` (EPSG:28992).
-2. Convert the four 3D BAG tiles and the Eindhoven tree dataset into the files `backend/data_io.py` expects.
-3. Engineer replaces the placeholder tree class values and confirms the targets.
+1. Architect checks the draft corridor on the map. To change it, draw one line at geojson.io, save it, and run `python scripts/fetch_data.py --centreline your_line.geojson`.
+2. Engineer replaces the placeholder tree class values and confirms the targets.
+3. Team marks the native species in `data/plants_candidates.csv` (set `native` to `yes`, fill in `family` and `common_name`), then runs `python scripts/build_plants.py --apply`.
 
 ## 4. KPIs and targets
 
@@ -85,6 +91,10 @@ Fellenoord is paved and about to be rebuilt. Street-tree schemes often fail belo
 | Longest gap | Longest uncovered stretch of centreline | 25 m or less | Team proposal |
 | Trees in natural soil | Trees whose cell meets their soil need ÷ all trees | 60% or more | Team proposal |
 
+| Sun on the route | Average direct-sun hours along the centreline on 21 June, with buildings, existing trees and planted trees at the chosen year | None set | Reported only |
+
+"Shaded route" counts the path as shaded where a crown is overhead or within 2 m in plan; it does not use the sun. "Sun on the route" does: it is the one metric where building shadows count.
+
 Only the canopy target comes from a published rule. The cluster passport 1A KPI annex may hold official targets and has not been read.
 
 ## 5. Algorithm
@@ -92,7 +102,7 @@ Only the canopy target comes from a published rule. The cluster passport 1A KPI 
 1. **Inputs:** 3D mass, surfaces, greenery, soil, climate proxy, plant database.
 2. **Grid:** 2 m cells inside the corridor.
 3. **Mask:** remove buildings, carriageway and the assumed utilities strip.
-4. **Score:** `score = w_heat × heat + w_soil × soil + w_gap × gap`. Cells scoring below 0.15 are not planted.
+4. **Score:** `score = w_heat × heat + w_soil × soil + w_gap × gap`. Cells scoring below 0.15 are not planted. Heat is the cell's direct-sun hours on 21 June (see below), counted fully on paving and half on open ground.
 5. **Place:** take the best free cell, pick the largest tree class the soil allows, block neighbours within spacing, update distances, repeat until the tree budget is used.
 6. **Species:** filter by size class and soil moisture, then balance toward the 10-20-30 mix (at most 10% one species, 20% one genus, 30% one family).
 7. **Evaluate:** KPIs at any year from 2026 to 2060.
@@ -114,6 +124,19 @@ Tree classes in `backend/config.py`. **All are starting values, not sourced stan
 
 Other starting values: crown radius at planting 1.0 m; plantability 1.0 for open ground and 0.35 under paving.
 
+### How sun hours are calculated
+
+Code: `backend/sun.py`. No Rhino, Ladybug or EnergyPlus is involved.
+
+1. The sun's height and compass direction are computed every 30 minutes for 21 June at Fellenoord. Times with the sun lower than 10° are left out, which leaves 14 hours.
+2. Each building wall casts a shadow on the ground, as long as `height ÷ tan(sun height)`, pointing away from the sun.
+3. Each tree crown casts a shadow the same way. A crown is a disc of its crown radius, between 0.6 and 1.8 radii above the ground (a starting value).
+4. A point's sun hours are the time steps in which no shadow covers it.
+
+Checks that passed: the noon sun comes out at 62.0° due south (the textbook value for this latitude is 62.0°); a 10 m box under a 45° sun casts a 10 m shadow; shadows of an L-shaped building match the exact geometry on 4,000 random points at four sun positions.
+
+Limits: clear sky, one day, flat ground, flat-roofed building parts, direct sun only. It says where the sun falls, not how hot it gets.
+
 ## 6. The app
 
 Set up and run (full steps in the [README](../README.md)):
@@ -124,22 +147,25 @@ Set up and run (full steps in the [README](../README.md)):
 streamlit run app.py
 ```
 
-- Sidebar: option A, B, C or custom weights; tree budget; year.
+- Sidebar: option A, B, C or custom weights; tree budget; year; a switch to colour the ground by sun hours.
 - Option cards with the four KPIs, best fit marked.
 - 3D map: buildings, corridor, trees growing by year. Green can be planted now; magenta needs engineered soil.
 - Targets table, species mix chart, planting schedule with CSV and JSON downloads.
 
-Demo results from the log: synthetic corridor, 90 trees, year 2040. **These are not Fellenoord numbers.**
+First results on real data: 90 trees, year 2040, run on 13 November at 14:00. **Provisional:** the corridor is a draft and the tree classes are placeholders, so do not quote these to the jury yet.
 
-| Option | Canopy | Shaded route | Longest gap | Natural soil | Engineered soil |
-|---|---|---|---|---|---|
-| A Most shade | 20% | 45% | 49 m | 0% | 2,700 m³ |
-| B Most connected | 21% | 54% | 30 m | 10% | 2,430 m³ |
-| C Lowest cost | 12% | 37% | 69 m | 100% | 0 m³ |
+| Option | Canopy | Shaded route | Longest gap | Natural soil | Engineered soil | Sun on route |
+|---|---|---|---|---|---|---|
+| Today (existing trees only) | 9% | 45% | 181 m | n/a | n/a | 7.5 h |
+| A Most shade | 19% | 59% | 66 m | 0% | 2,700 m³ | 5.7 h |
+| B Most connected | 18% | 61% | 64 m | 39% | 1,650 m³ | 5.7 h |
+| C Lowest cost | 18% | 67% | 43 m | 100% | 0 m³ | 5.3 h |
 
-### Switching to real data
+Two things stand out. With these placeholder values, option C matches or beats A and B on shade and gap at no soil cost, so the three strategies do not yet show a real trade-off. And every option plants only large trees, because the placeholder soil thresholds allow it everywhere.
 
-Put these files in `data/`, all in EPSG:28992. Without `corridor.geojson` and `centreline.geojson` the app falls back to the demo corridor.
+### The data files
+
+`python scripts/fetch_data.py` downloads and writes all of these (run it inside `gsenv`, from the repo root). They are in `data/`, all in EPSG:28992. Without `corridor.geojson` and `centreline.geojson` the app falls back to the demo corridor.
 
 | File | Content | Required |
 |---|---|---|
@@ -161,19 +187,22 @@ Put these files in `data/`, all in EPSG:28992. Without `corridor.geojson` and `c
 - Ontwikkelvisie Fellenoord (annex and public version), Dutch Mountains preliminary urban plan
 - Fellenoord BV annual reports 2024 and 2025, Mooi NL advice, two event reports
 
-**To fetch**
+**In the repo now** (details and assumptions in [data/SOURCES.md](../data/SOURCES.md))
 
-- Existing trees: https://data.eindhoven.nl/explore/dataset/bomen/
-- Other public green: Eindhoven open data, "Openbaar groen"
-- Surfaces: OpenStreetMap
+| Layer | Source | Amount |
+|---|---|---|
+| Buildings with heights | 3D BAG, downloaded directly (the Drive tiles were not used) | 3,248 building parts within 400 m |
+| Existing trees | Eindhoven open data, "bomen" | 196 within 40 m of the corridor |
+| Roads and cycleways | OpenStreetMap | 46% of the corridor |
+| Green areas | OpenStreetMap | 25% of the corridor |
+| Corridor and centreline | Draft from OpenStreetMap | 909 m long, 5.45 ha |
+| Plants | `data/plants.csv`, 20 native species; `plant_database.csv`, the full team database (75 trees among 1,477 plants) | |
 
-**To make**
+**Still to make**
 
-- Corridor polygon and walking centreline
+- Confirmed corridor and walking line
 - Tree class table and soil lookup
-- The scored grid (made by the app)
-
-**In the repo now:** `data/plants.csv`, a starter table of 20 species.
+- Native list for the 55 candidate species
 
 ## 8. Team and schedule
 
@@ -195,8 +224,12 @@ Owners were assigned by discipline, not by name. The original handover times (12
 
 ## 9. Open issues
 
-- The dashboard passed an automated run but has not been checked visually.
-- The 10% species rule is not met (largest share 18%) because each size class has only six or seven species in the starter table. The full plant database should fix it.
+- The dashboard passed an automated run on real data, with the sun layer on and off, but has not been checked visually.
+- The corridor is a draft along the carriageway mid-line. The walking route in the final design will not be the road median, so "shaded route", "longest gap" and "sun on the route" will change when it is redrawn.
+- Roads are today's layout. The planned narrowing of the road, which is what frees the planting space, is not in the data.
+- The starter plant table and the team database disagree on size for 10 of the 20 species (for example silver birch: medium in the table, 20 m and so large by the database). The engineer should decide which to follow.
+- OpenStreetMap's download servers were overloaded on 13 November; `scripts/fetch_data.py` retries, but may need a second run.
+- The 10% species rule is not met (largest share 17 to 20% on real data) because each size class has only six or seven species in the starter table. Approving more native species from `data/plants_candidates.csv` should fix it.
 - Tree class sizes, growth rates and rooting volumes are placeholders.
 - Shade, gap and natural-soil targets are proposals, not sourced standards.
 - Collaborators have to be invited to the GitHub repo by hand (Settings, Collaborators).
@@ -246,6 +279,8 @@ Takeaway: corridors succeed above ground and fail below it, and benefits are rar
 | 12:09 | Drive folder inventoried |
 | 12:14 | Backend and Streamlit dashboard built and tested on demo data |
 | 12:40 | `gsenv` environment, setup scripts and README instructions added and pushed |
+| 13:10 | Rhino Compute, EnergyPlus and three.js considered and set aside; plan agreed for sun hours and real data in the existing app |
+| 14:00 | Sun hours added; real buildings, trees, roads and green downloaded; first run on real data |
 
 ## 11. Where everything is
 
@@ -273,3 +308,4 @@ Takeaway: corridors succeed above ground and fail below it, and benefits are rar
 - UNaLab, Vestdijk: https://unalab.eu/en/vestdijk
 - Eindhoven open data, Bomen: https://data.overheid.nl/dataset/22477-bomen
 - 3D BAG: https://3dbag.nl/en/download
+- OpenStreetMap: https://www.openstreetmap.org/copyright

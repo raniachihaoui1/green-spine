@@ -1,0 +1,76 @@
+species,common_name,genus,family,native,size_class,soil_moisture,in_app,db_plant_type,db_height,db_size_class,db_moisture
+Acer campestre,Field maple,Acer,Sapindaceae,yes,medium,dry;moist,yes,"Tree, Shrub",8 m to 11 m,medium,moist
+Alnus glutinosa,Black alder,Alnus,Betulaceae,yes,medium,wet;moist,yes,Tree,20 m to 37 m,large,moist;wet
+Betula pendula,Silver birch,Betula,Betulaceae,yes,medium,dry,yes,Tree,20 m,large,dry;moist
+Betula pubescens,Downy birch,Betula,Betulaceae,yes,medium,wet,yes,Tree,20 m,large,dry;moist;wet
+Carpinus betulus,Hornbeam,Carpinus,Betulaceae,yes,medium,moist,yes,Tree,12 m to 18 m,medium,moist
+Corylus avellana,Hazel,Corylus,Betulaceae,yes,small,moist;dry,yes,"Tree, Shrub",3 m to 15 m,medium,moist
+Crataegus monogyna,Hawthorn,Crataegus,Rosaceae,yes,small,dry;moist,yes,Tree,5 m to 14 m,medium,moist;wet
+Fagus sylvatica,Beech,Fagus,Fagaceae,yes,large,moist,yes,Tree,25 m to 40 m,large,dry;moist
+Ilex aquifolium,Holly,Ilex,Aquifoliaceae,yes,small,dry;moist,yes,"Shrub, Tree",9 m,small,dry;moist
+Malus sylvestris,Crab apple,Malus,Rosaceae,yes,small,moist,yes,"Tree, Shrub",10 m,medium,moist
+Pinus sylvestris,Scots pine,Pinus,Pinaceae,yes,large,dry,yes,Tree,35 m to 48 m,large,dry;moist;wet
+Populus tremula,Aspen,Populus,Salicaceae,yes,medium,moist;dry,yes,Tree,40 m,large,moist;wet
+Prunus avium,Wild cherry,Prunus,Rosaceae,yes,medium,moist,yes,Tree,6 m to 25 m,large,moist
+Prunus padus,Bird cherry,Prunus,Rosaceae,yes,small,wet;moist,yes,"Tree, Shrub",5 m to 16 m,medium,moist
+Quercus petraea,Sessile oak,Quercus,Fagaceae,yes,large,dry,yes,Tree,20 m to 40 m,large,moist;wet
+Quercus robur,Pedunculate oak,Quercus,Fagaceae,yes,large,moist;dry,yes,Tree,10 m to 50 m,large,moist;wet
+Salix alba,White willow,Salix,Salicaceae,yes,large,wet,yes,Tree,10 m to 30 m,large,moist;wet
+Sorbus aucuparia,Rowan,Sorbus,Rosaceae,yes,small,dry;moist,yes,"Tree, Shrub",6 m to 15 m,medium,moist
+Tilia cordata,Small-leaved lime,Tilia,Malvaceae,yes,large,moist,yes,Tree,15 m to 40 m,large,moist
+Ulmus laevis,European white elm,Ulmus,Ulmaceae,yes,large,wet;moist,yes,Tree,30 m,large,
+Abies alba,,Abies,,,large,moist,no,Tree,40-60 meters,large,moist
+Abies grandis,,Abies,,,large,moist,no,Tree,30 m to 76 m,large,moist
+Abies nordmanniana,,Abies,,,medium,moist,no,Tree,12 m to 18 m,medium,moist
+Acer platanoides,,Acer,,,large,moist,no,Tree,9 m to 30 m,large,moist
+Acer pseudoplatanus,,Acer,,,large,moist,no,Tree,20 m to 35 m,large,moist
+Acer saccharinum,,Acer,,,large,moist,no,Tree,15 m to 30 m,large,moist
+Aesculus hippocastanum,,Aesculus,,,large,dry;moist,no,Tree,25 m to 30 m,large,dry;moist
+Alnus cordata,,Alnus,,,large,dry;moist;wet,no,Tree,25 m,large,dry;moist;wet
+Alnus incana,,Alnus,,,medium,dry;moist;wet,no,Tree,12 m to 18 m,medium,dry;moist;wet
+Aria edulis,,Aria,,,small,moist,no,Tree,5 m,small,moist
+Castanea sativa,,Castanea,,,large,dry;moist,no,Tree,20 m to 35 m,large,dry;moist
+Chamaecyparis lawsoniana,,Chamaecyparis,,,large,dry;moist,no,Tree,15 m to 60 m,large,dry;moist
+Crataegus laevigata,,Crataegus,,,medium,moist;wet,no,"Tree, Shrub",8 m to 12 m,medium,moist;wet
+Euonymus europaeus,,Euonymus,,,medium,dry;moist,no,"Shrub, Tree",2 m to 10 m,medium,dry;moist
+Ficus carica,,Ficus,,,medium,dry;moist,no,"Shrub, Tree",3 m to 10 m,medium,dry;moist
+Fraxinus excelsior,,Fraxinus,,,large,moist;wet,no,Tree,12 m to 30 m,large,moist;wet
+Juglans regia,,Juglans,,,large,moist,no,Tree,18 m - 20 m,large,moist
+Laburnum anagyroides,,Laburnum,,,small,dry;moist,no,Tree,4 m to 9 m,small,dry;moist
+Larix decidua,,Larix,,,large,moist,no,Tree,25 m to 45 m,large,moist
+Larix kaempferi,,Larix,,,large,moist,no,Tree,15 m to 21 m,large,moist
+Malus domestica,,Malus,,,small,moist,no,Tree,4-8 meters,small,moist
+Mespilus germanica,,Mespilus,,,small,moist,no,"Tree, Shrub",8 m,small,moist
+Picea abies,,Picea,,,large,moist;wet,no,Tree,30 m to 62 m,large,moist;wet
+Picea sitchensis,,Picea,,,large,moist;wet,no,Tree,80 m,large,moist;wet
+Pinus nigra,,Pinus,,,medium,dry;moist,no,Tree,15 m to 18 m,medium,dry;moist
+Pinus pinaster,,Pinus,,,large,dry;moist,no,Tree,20 m to 35 m,large,dry;moist
+Pinus strobus,,Pinus,,,large,dry;moist,no,Tree,30 m to 67 m,large,dry;moist
+Populus alba,,Populus,,,large,dry;moist,no,Tree,15 m to 30 m,large,dry;moist
+Populus balsamifera,,Populus,,,large,moist,no,Tree,40 m,large,moist
+Populus canadensis,,Populus,,,large,,no,Tree,40 m,large,
+Populus deltoides,,Populus,,,large,moist,no,Tree,20 m to 60 m,large,moist
+Populus nigra,,Populus,,,large,moist,no,Tree,20 m to 40 m,large,moist
+Prunus cerasifera,,Prunus,,,medium,moist,no,"Shrub, Tree",8 m to 12 m,medium,moist
+Prunus domestica,,Prunus,,,medium,moist,no,Tree,6 m to 15 m,medium,moist
+Prunus serotina,,Prunus,,,large,moist,no,Tree,7 m to 24 m,large,moist
+Prunus spinosa,,Prunus,,,small,moist,no,"Tree, Shrub",4 m to 8 m,small,moist
+Pseudotsuga menziesii,,Pseudotsuga,,,large,moist;wet,no,Tree,20 m to 100 m,large,moist;wet
+Pyrus communis,,Pyrus,,,large,moist,no,Tree,2 m to 20 m,large,moist
+Quercus cerris,,Quercus,,,medium,moist,no,Tree,12 m to 18 m,medium,moist
+Quercus palustris,,Quercus,,,large,moist,no,Tree,25 m,large,moist
+Quercus pubescens,,Quercus,,,large,dry;moist,no,Tree,20 m,large,dry;moist
+Quercus rubra,,Quercus,,,large,dry;moist,no,Tree,15 m to 28 m,large,dry;moist
+Robinia pseudoacacia,,Robinia,,,large,dry;moist,no,Tree,10 m to 30 m,large,dry;moist
+Salix atrocinerea,,Salix,,,medium,moist;wet,no,Tree,10 m,medium,moist;wet
+Salix cinerea,,Salix,,,medium,moist;wet,no,"Tree, Shrub",4 m to 15 m,medium,moist;wet
+Salix fragilis,,Salix,,,medium,moist;wet,no,Tree,15 m,medium,moist;wet
+Salix pentandra,,Salix,,,medium,moist;wet,no,Tree,14 m to 17 m,medium,moist;wet
+Salix viminalis,,Salix,,,small,moist;wet,no,Tree,7 m,small,moist;wet
+Syringa vulgaris,,Syringa,,,small,moist,no,"Shrub, Tree",6 m to 7 m,small,moist
+Taxus baccata,,Taxus,,,large,dry;moist,no,"Tree, Shrub",10 m to 20 m,large,dry;moist
+Thuja occidentalis,,Thuja,,,large,moist;wet,no,Tree,15 m to 38 m,large,moist;wet
+Tilia platyphyllos,,Tilia,,,large,moist,no,Tree,18 m to 24 m,large,moist
+Tsuga heterophylla,,Tsuga,,,large,moist,no,Tree,40 m,large,moist
+Ulmus glabra,,Ulmus,,,large,moist,no,Tree,40 m,large,moist
+Viburnum lantana,,Viburnum,,,small,dry;moist,no,"Tree, Shrub",2.75 - 5 m,small,dry;moist

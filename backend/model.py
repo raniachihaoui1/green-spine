@@ -6,6 +6,7 @@ import shapely
 from shapely.geometry import Point
 from shapely.ops import unary_union
 from . import config as C
+from . import sun
 
 
 # ---------- 1. grid ----------
@@ -35,10 +36,17 @@ def build_grid(L: dict) -> pd.DataFrame:
     g["soil"] = np.where(g.paved, C.SOIL_PAVED, C.SOIL_UNPAVED)
     g["moisture"] = np.where(g.wet, "wet", np.where(g.paved, "dry", "moist"))
     g["dist_canopy"] = _dist_to_existing(g, L["existing_trees"])
-    exposure = np.where(g.paved, 1.0, 0.5)
-    g["heat"] = exposure * (0.4 + 0.6 * np.clip(g.dist_canopy / C.GAP_CAP, 0, 1))
+    g = g[~g.blocked].reset_index(drop=True)
+    # Heat = direct-sun hours on the design day (buildings and existing trees cast
+    # shadows), weighted by surface: paving heats up fully, open ground half as much.
+    pos = sun.sun_positions()
+    ex = L["existing_trees"]
+    shaded = sun.building_shade(g.x, g.y, L["buildings"], pos) | sun.tree_shade(
+        g.x, g.y, [p.x for p, _ in ex], [p.y for p, _ in ex], [r for _, r in ex], pos)
+    g["sun_hours"] = sun.hours(shaded)
+    g["heat"] = np.where(g.paved, 1.0, 0.5) * g.sun_hours
     g["heat"] = g.heat / max(g.heat.max(), 1e-9)
-    return g[~g.blocked].reset_index(drop=True)
+    return g
 
 
 def _dist_to_existing(g, trees):
@@ -136,6 +144,30 @@ def canopy_geometry(trees: pd.DataFrame, L: dict, year: int):
     return unary_union(geoms) if geoms else Point(0, 0).buffer(0)
 
 
+def route_base(L: dict) -> dict:
+    """Sample points along the walking route and the building shade on them.
+    Independent of the planting option, so compute once and keep it in L["route"]."""
+    line = L["centreline"]
+    d = np.arange(C.ROUTE_STEP / 2, line.length, C.ROUTE_STEP)
+    pts = shapely.line_interpolate_point(line, d)
+    x, y = shapely.get_x(pts), shapely.get_y(pts)
+    pos = sun.sun_positions()
+    return dict(x=x, y=y, pos=pos, bld=sun.building_shade(x, y, L["buildings"], pos))
+
+
+def route_sun_hours(trees: pd.DataFrame, L: dict, year: int) -> float:
+    """Average direct-sun hours along the route on the design day, with buildings,
+    existing trees and the planted trees at their size in this year."""
+    R = L.get("route") or route_base(L)
+    ex = L["existing_trees"]
+    tx, ty, tr = [p.x for p, _ in ex], [p.y for p, _ in ex], [r for _, r in ex]
+    if len(trees):
+        tx, ty = tx + list(trees.x), ty + list(trees.y)
+        tr = tr + list(crown_radius(trees.size_class, year))
+    shaded = R["bld"] | sun.tree_shade(R["x"], R["y"], tx, ty, tr, R["pos"])
+    return float(sun.hours(shaded).mean())
+
+
 def kpis(trees: pd.DataFrame, L: dict, year: int) -> dict:
     canopy = canopy_geometry(trees, L, year)
     line = L["centreline"]
@@ -150,6 +182,7 @@ def kpis(trees: pd.DataFrame, L: dict, year: int) -> dict:
         shade_pct=100 * covered.length / line.length,
         longest_gap_m=max((p.length for p in parts), default=0.0),
         natural_soil_pct=100 * (1 - len(eng) / n) if n else 0.0,
+        route_sun_hours=route_sun_hours(trees, L, year),
         trees=n,
         species=int(trees.species.nunique()) if n and "species" in trees else 0,
         max_species_share_pct=float(100 * trees.species.value_counts(normalize=True).max()) if n and "species" in trees else 0.0,

@@ -35,3 +35,11 @@ PROFILES = {
 
 # 10-20-30 diversity rule
 MAX_SPECIES, MAX_GENUS, MAX_FAMILY = 0.10, 0.20, 0.30
+
+# Sun study (backend/sun.py): clear-sky direct sun on one design day.
+DESIGN_DAY = (6, 21)        # month, day: summer solstice, the hottest sun geometry
+LAT, LON = 51.4437, 5.4800  # Fellenoord, Eindhoven
+SUN_STEP_H = 0.5            # time step in hours
+MIN_SUN_ALTITUDE = 10.0     # degrees; lower sun is ignored (very long shadows, little heat)
+CROWN_BASE, CROWN_TOP = 0.6, 1.8   # crown spans these multiples of its radius in height (STARTING VALUE)
+ROUTE_STEP = 2.0            # metres between sample points on the walking route

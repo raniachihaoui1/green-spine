@@ -8,7 +8,7 @@ from pyproj import Transformer
 
 from backend import config as C
 from backend.data_io import load_layers
-from backend.model import build_grid, run_option, kpis, targets_met, crown_radius
+from backend.model import build_grid, run_option, kpis, targets_met, crown_radius, route_base
 
 st.set_page_config(page_title="Green Spine", layout="wide")
 _to_wgs = Transformer.from_crs("EPSG:28992", "EPSG:4326", always_xy=True)
@@ -40,6 +40,7 @@ def polys(geom):
 @st.cache_data(show_spinner=False)
 def load():
     L = load_layers("data")
+    L["route"] = route_base(L)
     return L, build_grid(L), pd.read_csv("data/plants.csv")
 
 
@@ -47,6 +48,11 @@ def load():
 def option(heat, soil, gap, budget):
     L, grid, plants = load()
     return run_option(L, grid, plants, dict(heat=heat, soil=soil, gap=gap), budget)
+
+
+@st.cache_data(show_spinner=False)
+def option_kpis(heat, soil, gap, budget, year):
+    return kpis(option(heat, soil, gap, budget), load()[0], year)
 
 
 L, grid, plants = load()
@@ -64,6 +70,8 @@ cw = dict(
     soil=st.sidebar.slider("Cost (use good soil)", 0.0, 1.0, 0.3, 0.05, disabled=choice != "Custom weights"),
     gap=st.sidebar.slider("Connectivity", 0.0, 1.0, 0.3, 0.05, disabled=choice != "Custom weights"),
 )
+show_sun = st.sidebar.toggle("Show sun hours on the map", value=False,
+                             help="Direct-sun hours per 2 m cell on 21 June, with shadows from buildings and existing trees.")
 if L["demo"]:
     st.sidebar.warning("Demo data. Geometry is synthetic until the real layers are in data/.")
 
@@ -71,10 +79,10 @@ if L["demo"]:
 results = {}
 for name, w in C.PROFILES.items():
     t = option(w["heat"], w["soil"], w["gap"], budget)
-    results[name] = (t, kpis(t, L, year))
+    results[name] = (t, option_kpis(w["heat"], w["soil"], w["gap"], budget, year))
 if choice == "Custom weights":
     t = option(cw["heat"], cw["soil"], cw["gap"], budget)
-    results[choice] = (t, kpis(t, L, year))
+    results[choice] = (t, option_kpis(cw["heat"], cw["soil"], cw["gap"], budget, year))
 best = max(results, key=lambda n: (targets_met(results[n][1]), results[n][1]["canopy_pct"]))
 trees, K = results[choice]
 base = kpis(trees.iloc[0:0], L, year)
@@ -107,6 +115,15 @@ with left:
     if not L["road"].is_empty:
         layers.append(pdk.Layer("PolygonLayer", [{"p": ring(p)} for p in polys(L["road"])], get_polygon="p",
                                 get_fill_color=[90, 90, 90, 200], stroked=False))
+    if show_sun:
+        s = grid[["x", "y", "sun_hours"]].copy()
+        s["lon"], s["lat"] = ll(s.x, s.y)
+        f = (s.sun_hours / max(s.sun_hours.max(), 1e-9)).values[:, None]
+        lo, hi = np.array([255, 247, 214]), np.array([217, 72, 1])       # pale yellow to deep orange
+        s["color"] = (lo + f * (hi - lo)).astype(int).tolist()
+        s["label"] = s.sun_hours.map(lambda v: f"{v:.1f} h of direct sun on 21 June")
+        layers.append(pdk.Layer("ScatterplotLayer", s[["lon", "lat", "color", "label"]], get_position=["lon", "lat"],
+                                get_radius=1.15, get_fill_color="color", stroked=False, pickable=True))
     layers.append(pdk.Layer("PolygonLayer", [{"p": ring(b), "h": h} for b, h in L["buildings"]], get_polygon="p",
                             extruded=True, get_elevation="h", get_fill_color=[205, 205, 205, 255]))
     if L["existing_trees"]:
@@ -132,7 +149,9 @@ with left:
                              initial_view_state=pdk.ViewState(longitude=float(clon[0]), latitude=float(clat[0]),
                                                               zoom=16.3, pitch=50, bearing=-20),
                              tooltip={"text": "{label}"}), height=520)
-    st.caption("Green: plant now in existing soil. Magenta: needs engineered soil. Grey-green: existing trees.")
+    st.caption("Green: plant now in existing soil. Magenta: needs engineered soil. Grey-green: existing trees."
+               + (f" Ground colour: direct sun on 21 June, pale = {grid.sun_hours.min():.0f} h, deep orange = {grid.sun_hours.max():.0f} h."
+                  if show_sun else ""))
 
 with right:
     st.subheader("Against targets")
@@ -142,8 +161,11 @@ with right:
         ok = (K[key] >= val) if op == ">=" else (K[key] <= val)
         rows.append({"Metric": label, "Today": f"{base[key]:.0f}{unit}", str(year): f"{K[key]:.0f}{unit}",
                      "Target": f"{'at least' if op == '>=' else 'at most'} {val:.0f}{unit}", "Met": "Yes" if ok else "No"})
+    rows.append({"Metric": "Sun on the route (21 June)", "Today": f"{base['route_sun_hours']:.1f} h",
+                 str(year): f"{K['route_sun_hours']:.1f} h", "Target": "none set", "Met": "n/a"})
     st.dataframe(pd.DataFrame(rows), hide_index=True)
-    st.caption("'Today' is the corridor with existing trees only. Natural soil has no baseline because nothing new is planted yet.")
+    st.caption("'Today' is the corridor with existing trees only. Natural soil has no baseline because nothing new is planted yet. "
+               "Sun on the route is the average direct-sun time along the walking line; lower means more shade.")
     m1, m2 = st.columns(2)
     m1.metric("Engineered soil needed", f"{K['engineered_soil_m3']:.0f} m³")
     m2.metric("Largest species share", f"{K['max_species_share_pct']:.0f}%", help="10-20-30 rule: at most 10% per species")
@@ -169,6 +191,8 @@ with st.expander("Assumptions"):
     st.markdown(
         "- Tree class sizes, growth rates and rooting volumes are starting values to be confirmed by the team.\n"
         "- Soil is approximated as paved versus unpaved until a soil layer is added.\n"
-        "- Heat is approximated as paved ground far from existing canopy.\n"
+        "- Heat is direct-sun hours on 21 June (clear sky, flat ground), with shadows cast by buildings and existing trees; "
+        "paving counts fully and open ground half. Air temperature, wind and reflected light are not modelled.\n"
+        "- Tree crowns are modelled as discs when casting shade.\n"
         "- Underground utilities are an assumed no-plant strip.\n"
         "- The 30% canopy target follows the 3-30-300 rule; the other targets are team proposals.")

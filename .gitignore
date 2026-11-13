@@ -1,0 +1,15 @@
+# Python environments
+gsenv/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Large source inputs: keep these locally, never in git
+Assets_inputs/
+data/raw/
+Claude outputs/
+
+# OS
+.DS_Store
+Thumbs.db

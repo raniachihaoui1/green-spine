@@ -1,0 +1,6 @@
+streamlit>=1.33
+pydeck>=0.8
+numpy
+pandas
+shapely>=2.1
+pyproj

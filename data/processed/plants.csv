@@ -1,0 +1,21 @@
+species,common_name,genus,family,native,size_class,soil_moisture
+Quercus robur,Pedunculate oak,Quercus,Fagaceae,yes,large,moist;dry
+Quercus petraea,Sessile oak,Quercus,Fagaceae,yes,large,dry
+Tilia cordata,Small-leaved lime,Tilia,Malvaceae,yes,large,moist
+Fagus sylvatica,Beech,Fagus,Fagaceae,yes,large,moist
+Ulmus laevis,European white elm,Ulmus,Ulmaceae,yes,large,wet;moist
+Salix alba,White willow,Salix,Salicaceae,yes,large,wet
+Pinus sylvestris,Scots pine,Pinus,Pinaceae,yes,large,dry
+Alnus glutinosa,Black alder,Alnus,Betulaceae,yes,medium,wet;moist
+Carpinus betulus,Hornbeam,Carpinus,Betulaceae,yes,medium,moist
+Acer campestre,Field maple,Acer,Sapindaceae,yes,medium,dry;moist
+Betula pendula,Silver birch,Betula,Betulaceae,yes,medium,dry
+Betula pubescens,Downy birch,Betula,Betulaceae,yes,medium,wet
+Prunus avium,Wild cherry,Prunus,Rosaceae,yes,medium,moist
+Populus tremula,Aspen,Populus,Salicaceae,yes,medium,moist;dry
+Sorbus aucuparia,Rowan,Sorbus,Rosaceae,yes,small,dry;moist
+Crataegus monogyna,Hawthorn,Crataegus,Rosaceae,yes,small,dry;moist
+Malus sylvestris,Crab apple,Malus,Rosaceae,yes,small,moist
+Prunus padus,Bird cherry,Prunus,Rosaceae,yes,small,wet;moist
+Corylus avellana,Hazel,Corylus,Betulaceae,yes,small,moist;dry
+Ilex aquifolium,Holly,Ilex,Aquifoliaceae,yes,small,dry;moist

@@ -211,3 +211,12 @@ To switch to real data, put these files in `data/`, all in EPSG:28992: `corridor
 - UNaLab, Vestdijk: https://unalab.eu/en/vestdijk
 - Eindhoven open data, Bomen: https://data.overheid.nl/dataset/22477-bomen
 - 3D BAG: https://3dbag.nl/en/download
+
+## 14:10 Existing trees from the RIVM Bomenkaart 2022
+
+- Clipped the national RIVM Bomenkaart 2022 (10 m cells, % cover by trees > 2.5 m, AHN4 + infrared photo 2022) to the Fellenoord scope (Kennedyplein to the Dommel) plus 250 m margin: 2.2 × 1.7 km, 220 × 170 cells, mean tree cover 12%. Tool: `tools/clip_bomenkaart.py` (needs rasterio; rerun with `--corridor data/corridor.geojson` once the corridor is drawn).
+- New files in `data/`: `bomenkaart_2022_fellenoord.npz` (read by the app, numpy only), `bomenkaart_2022_fellenoord.tif` (QGIS), `scope_fellenoord.geojson`.
+- The app now uses this map as the existing canopy, also on the demo corridor. Each 10 m cell is one disc with the same covered area. No species or heights.
+- New KPI **Existing canopy kept (behoud)**: canopy area inside the corridor that stays ÷ canopy today. Target ≥ 90% (team proposal). Losses split into "lost to the plan" (under a building or carriageway) and "cleared for planting".
+- Sidebar: "Keep existing trees" toggle and "Protect canopy from (% cover)" slider (default 30%). Protected cells block new trunks within crown radius + 3 m.
+- Demo corridor result: 661 m² canopy inside the corridor today (2.9% cover); 73% kept with protection on, 48–73% with it off. Not Fellenoord numbers until the real corridor is in.

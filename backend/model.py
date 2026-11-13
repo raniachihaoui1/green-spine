@@ -5,11 +5,18 @@ import pandas as pd
 import shapely
 from shapely.geometry import Point
 from shapely.ops import unary_union
-from . import config as C
+from . import parameters as C
 
 
 # ---------- 1. grid ----------
-def build_grid(L: dict) -> pd.DataFrame:
+def build_grid(L: dict, setback_building: float = C.TREE_SETBACK_BUILDING_M,
+               setback_road: float = C.TREE_SETBACK_ROAD_M, no_plant=None) -> pd.DataFrame:
+    """2 m grid of plantable cells inside the corridor.
+
+    A cell is blocked inside a building, the carriageway or the utilities strip, within
+    `setback_building` m of a facade, within `setback_road` m of the carriageway, and
+    inside `no_plant` (e.g. the building canopies) when given.
+    """
     minx, miny, maxx, maxy = L["corridor"].bounds
     xs = np.arange(minx + C.CELL / 2, maxx, C.CELL)
     ys = np.arange(miny + C.CELL / 2, maxy, C.CELL)
@@ -21,9 +28,14 @@ def build_grid(L: dict) -> pd.DataFrame:
 
     blocked = np.zeros(len(x), bool)
     bld = unary_union([b for b, _ in L["buildings"]]) if L["buildings"] else None
-    for geom in (bld, L["road"], L["utilities"]):
+    for geom in (bld, L["road"], L["utilities"], no_plant):
         if geom is not None and not geom.is_empty:
             blocked |= shapely.contains(geom, pts)
+    # setbacks from facades and carriageway edges
+    if bld is not None and not bld.is_empty and setback_building > 0:
+        blocked |= shapely.dwithin(bld, pts, setback_building)
+    if not L["road"].is_empty and setback_road > 0:
+        blocked |= shapely.dwithin(L["road"], pts, setback_road)
     paved = np.ones(len(x), bool)
     if not L["unpaved"].is_empty:
         paved = ~shapely.contains(L["unpaved"], pts)
@@ -139,9 +151,8 @@ def canopy_geometry(trees: pd.DataFrame, L: dict, year: int):
 def kpis(trees: pd.DataFrame, L: dict, year: int) -> dict:
     canopy = canopy_geometry(trees, L, year)
     line = L["centreline"]
-    walk = line.buffer(4, cap_style="flat")          # walking zone around the centreline
-    covered = line.intersection(canopy.buffer(2))    # crown within 2 m still shades the path
-    rest = line.difference(canopy.buffer(2))
+    covered = line.intersection(canopy.buffer(C.SHADE_REACH_M))    # crown close to the path still shades it
+    rest = line.difference(canopy.buffer(C.SHADE_REACH_M))
     parts = list(rest.geoms) if hasattr(rest, "geoms") else ([rest] if not rest.is_empty else [])
     n = len(trees)
     eng = trees[trees.engineered] if n else trees

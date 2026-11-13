@@ -2,21 +2,26 @@
 
 Run from the repo root, inside gsenv:
 
-    python scripts/build_plants.py            # writes data/plants_candidates.csv for the team to review
-    python scripts/build_plants.py --apply    # adds the approved candidates to data/plants.csv
+    python scripts/build_plants.py            # writes data/processed/plants_candidates.csv for the team to review
+    python scripts/build_plants.py --apply    # adds the approved candidates to data/processed/plants.csv
 
 The database has no "native" flag, no family and no common name, and the project
 plants native species only. So nothing is added automatically: in
-data/plants_candidates.csv, set native to "yes" and fill in family and common_name
+data/processed/plants_candidates.csv, set native to "yes" and fill in family and common_name
 for each species the team approves, then run with --apply.
 """
 import argparse
 import re
+import sys
 from pathlib import Path
 
-import pandas as pd
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # repo root, for backend.parameters
+from backend.parameters import PROCESSED_DIR, RAW_DIR  # noqa: E402
 
-DB, PLANTS, CANDIDATES = Path("plant_database.csv"), Path("data/plants.csv"), Path("data/plants_candidates.csv")
+import pandas as pd  # noqa: E402
+
+DB = Path(RAW_DIR) / "plants" / "plant_database.csv"
+PLANTS, CANDIDATES = Path(PROCESSED_DIR) / "plants.csv", Path(PROCESSED_DIR) / "plants_candidates.csv"
 
 # ASSUMPTION (starting values): size class from the largest height the database gives.
 MEDIUM_FROM, LARGE_FROM = 10.0, 20.0     # metres
@@ -66,16 +71,16 @@ def apply():
         raise SystemExit("These approved species still miss family, common_name, size_class or soil_moisture:\n  "
                          + "\n  ".join(missing.species))
     if ok.empty:
-        print("Nothing to add: no new species is marked native = yes in data/plants_candidates.csv.")
+        print(f"Nothing to add: no new species is marked native = yes in {CANDIDATES}.")
         return
     out = pd.concat([plants, ok[plants.columns]], ignore_index=True)
     out.to_csv(PLANTS, index=False)
-    print(f"Added {len(ok)} species; data/plants.csv now has {len(out)}.")
+    print(f"Added {len(ok)} species; {PLANTS} now has {len(out)}.")
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--apply", action="store_true", help="add approved candidates to data/plants.csv")
+    ap.add_argument("--apply", action="store_true", help="add approved candidates to data/processed/plants.csv")
     if ap.parse_args().apply:
         apply()
     else:

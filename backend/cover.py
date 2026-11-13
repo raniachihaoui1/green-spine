@@ -1,4 +1,4 @@
-"""Built shelter: building canopies, the road pergola and the covered-ground analysis.
+"""Built shelter geometry: building canopies and the road pergola.
 
 All geometry is in RD (EPSG:28992). Every number comes from backend/parameters.py,
 or from the arguments the dashboard passes in.
@@ -60,7 +60,7 @@ def building_canopies(L: dict, min_height=P.CANOPY_MIN_BUILDING_HEIGHT_M, width=
     Returns dict(geom, per_building=[(footprint, height, canopy)], facade_m, n_buildings).
     """
     tall = [(b, h) for b, h in L["buildings"] if h > min_height]
-    all_fp = unary_union([b for b, _ in L["buildings"]]) if L["buildings"] else EMPTY
+    all_fp = L["bld_union"] if L.get("bld_union") is not None else (unary_union([b for b, _ in L["buildings"]]) if L["buildings"] else EMPTY)
     cut = all_fp
     if avoid_road and not L["road"].is_empty:
         cut = unary_union([all_fp, L["road"]])
@@ -128,63 +128,5 @@ def road_pergola(road, width_pct=P.PERGOLA_ROAD_PCT, length_pct=P.PERGOLA_LENGTH
     return unary_union(strips) if strips else EMPTY
 
 
-# ---------------------------------------------------------------------------
-# Covered-ground analysis
-# ---------------------------------------------------------------------------
-def covered_ground(L: dict, canopy, pergola, crowns=None, *,
-                   canopy_green=P.CANOPY_GREEN_FRACTION, pergola_green=P.PERGOLA_GREEN_FRACTION,
-                   canopy_sun=P.CANOPY_SUN_FACTOR, canopy_rain=P.CANOPY_RAIN_FACTOR,
-                   pergola_sun=P.PERGOLA_SUN_FACTOR, pergola_rain=P.PERGOLA_RAIN_FACTOR) -> dict:
-    """How much ground the canopies and pergola cover, inside the corridor.
-
-    canopy, pergola: shapely geometries. crowns: optional tree crown geometry for the
-    selected year, used only for the combined 'sheltered route' figure.
-    Areas in m2, volumes in m3, shares in %.
-    """
-    corr = L["corridor"]
-    bld = unary_union([b for b, _ in L["buildings"]]) if L["buildings"] else EMPTY
-    public = corr.difference(bld) if not bld.is_empty else corr
-    road = L["road"]
-
-    can_c = canopy.intersection(corr) if not canopy.is_empty else EMPTY
-    per_c = pergola.intersection(corr) if not pergola.is_empty else EMPTY
-    built = unary_union([g for g in (can_c, per_c) if not g.is_empty]) if (not can_c.is_empty or not per_c.is_empty) else EMPTY
-    built_area = built.area
-    walk_ground = can_c.difference(road) if not road.is_empty and not can_c.is_empty else can_c
-
-    green_can = can_c.area * canopy_green
-    green_per = per_c.area * pergola_green
-    green_m2 = green_can + green_per
-    sun_m2 = can_c.area * canopy_sun + per_c.area * pergola_sun
-    rain_m2 = can_c.area * canopy_rain + per_c.area * pergola_rain
-
-    # Sheltered route: centreline under canopies/pergola, and with tree crowns added
-    line = L["centreline"]
-    walk = line.buffer(P.WALK_ZONE_HALF_WIDTH_M, cap_style="flat").intersection(corr)
-    reach = P.SHADE_REACH_M
-    def route_pct(g):
-        if g is None or g.is_empty:
-            return 0.0
-        return 100.0 * line.intersection(g.buffer(reach)).length / line.length
-    all_cover = unary_union([g for g in (built, crowns) if g is not None and not g.is_empty]) \
-        if (not built.is_empty or (crowns is not None and not crowns.is_empty)) else EMPTY
-
-    return dict(
-        canopy_m2=can_c.area,
-        canopy_total_m2=canopy.area,
-        pergola_m2=per_c.area,
-        covered_m2=built_area,
-        covered_public_pct=100.0 * built_area / public.area if public.area else 0.0,
-        pedestrian_covered_m2=walk_ground.area,
-        road_covered_pct=100.0 * per_c.area / road.intersection(corr).area
-            if not road.is_empty and road.intersection(corr).area else 0.0,
-        sun_sheltered_m2=sun_m2,
-        rain_sheltered_m2=rain_m2,
-        green_on_structures_m2=green_m2,
-        green_retention_m3=green_m2 * P.GREEN_ROOF_RETENTION_L_M2 / 1000.0,
-        rain_kept_off_m3=rain_m2 * P.DESIGN_RAIN_MM / 1000.0,
-        walk_zone_covered_pct=100.0 * walk.intersection(built).area / walk.area
-            if walk.area and not built.is_empty else 0.0,
-        route_sheltered_structures_pct=route_pct(built),
-        route_sheltered_all_pct=route_pct(all_cover),
-    )
+# The covered-ground analysis moved to backend/metrics/covered_ground.py
+from .metrics.covered_ground import covered_ground  # noqa: E402,F401

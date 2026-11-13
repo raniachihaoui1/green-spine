@@ -16,7 +16,7 @@ from . import config as C
 FILE = "bomenkaart_2022_fellenoord.npz"
 
 
-def load_raster(data_dir="data"):
+def load_raster(data_dir=C.PROCESSED_DIR):
     p = Path(data_dir) / FILE
     if not p.exists():
         return None

@@ -1,4 +1,4 @@
-"""Load real layers from data/ when present (GeoJSON in EPSG:28992), else demo data.
+"""Load real layers from data/processed/ when present (GeoJSON in EPSG:28992), else demo data.
 
 Expected files:
   corridor.geojson        one Polygon
@@ -9,7 +9,7 @@ Expected files:
   trees_existing.geojson  Points, property 'crown_radius' (m, optional)
 Optional: utilities.geojson, wet_zone.geojson
 
-Existing canopy: if data/bomenkaart_2022_fellenoord.npz exists (tools/clip_bomenkaart.py), the RIVM
+Existing canopy: if data/processed/bomenkaart_2022_fellenoord.npz exists (scripts/clip_bomenkaart.py), the RIVM
 Bomenkaart 2022 replaces trees_existing.geojson / the demo trees as the existing canopy, so nothing is
 counted twice.
 """
@@ -22,6 +22,7 @@ from shapely.geometry import shape, Polygon
 from shapely.ops import unary_union
 from .demo_data import make_demo
 from . import bomenkaart
+from . import parameters as C
 
 EMPTY = Polygon()
 
@@ -39,8 +40,10 @@ def _union(path: Path):
     return unary_union(geoms) if geoms else EMPTY
 
 
-def load_layers(data_dir="data") -> dict:
+def load_layers(data_dir=C.PROCESSED_DIR) -> dict:
     L = _load_geometry(data_dir)
+    # all footprints merged once; the metrics reuse it instead of merging 3,000+ buildings per call
+    L["bld_union"] = unary_union([g for g, _ in L["buildings"]]) if L["buildings"] else None
     R = bomenkaart.load_raster(data_dir)
     if R is not None:
         L["existing"] = bomenkaart.existing_canopy(R, L["corridor"], L["buildings"], L["road"])
@@ -67,7 +70,7 @@ def _points_to_cells(L) -> pd.DataFrame:
     return df
 
 
-def _load_geometry(data_dir="data") -> dict:
+def _load_geometry(data_dir=C.PROCESSED_DIR) -> dict:
     d = Path(data_dir)
     if not (d / "corridor.geojson").exists() or not (d / "centreline.geojson").exists():
         return make_demo()

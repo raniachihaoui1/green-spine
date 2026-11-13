@@ -1,4 +1,13 @@
-"""Match plant soil preferences to the Fellenoord soil profiles."""
+"""Match plant soil preferences to the Fellenoord soil profiles (BRO boreholes).
+
+Written by the team (was plant_fellenoord_compatibility.py in the repo root). Run from the
+repo root to rebuild the processed list:
+
+    python -m backend.soil
+
+Reads  data/raw/soil/fellenoord_soil_type.csv and data/raw/plants/plant_database.csv
+Writes data/processed/fellenoord_compatible_plants.csv
+"""
 
 import csv
 import math
@@ -24,9 +33,10 @@ PLANT_SOIL_COLUMNS = {
     "medium": "Soil: Medium (M)",
     "fine": "Soil: Heavy (H)",
 }
-DEFAULT_SOIL_CSV = Path(__file__).with_name("fellenoord_soil_type.csv")
-DEFAULT_PLANT_CSV = Path(__file__).with_name("plant_database.csv")
-DEFAULT_OUTPUT_CSV = Path(__file__).with_name("fellenord_compatible_files.csv")
+_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_SOIL_CSV = _ROOT / "data" / "raw" / "soil" / "fellenoord_soil_type.csv"
+DEFAULT_PLANT_CSV = _ROOT / "data" / "raw" / "plants" / "plant_database.csv"
+DEFAULT_OUTPUT_CSV = _ROOT / "data" / "processed" / "fellenoord_compatible_plants.csv"
 
 
 def _read_csv(path):
@@ -231,3 +241,35 @@ if __name__ == "__main__":
     selected = select_compatible_plants()
     count = save_compatible_plants(selected)
     print(f"Saved {count} compatible plants to {DEFAULT_OUTPUT_CSV.name}")
+
+
+# ---------------------------------------------------------------------------
+# Helpers for the app (added 13 Nov 2026): borehole positions and a
+# species x borehole score table, so each 2 m cell can use its nearest borehole.
+# ---------------------------------------------------------------------------
+def borehole_positions(path=DEFAULT_SOIL_CSV):
+    """{borehole id: (x, y)} in RD (EPSG:28992), from the BRO 'pos' column."""
+    out = {}
+    for row in _read_csv(path):
+        bid = (row.get(SOIL_COLUMNS["borehole"]) or "").strip()
+        pos = (row.get("ns2:pos") or "").split()
+        if bid and len(pos) == 2 and bid not in out:
+            out[bid] = (float(pos[0]), float(pos[1]))
+    return out
+
+
+def compatibility_table(species, soil_csv=DEFAULT_SOIL_CSV, plant_csv=DEFAULT_PLANT_CSV,
+                        default_root_depth=1.0):
+    """Soil-fit score (0-1, or None when the profile cannot be judged) for each
+    species in `species` at each borehole: {borehole: {species: score}}."""
+    wanted = set(species)
+    profiles = load_soil_profiles(soil_csv)
+    table = {b: {} for b in profiles}
+    for plant in _read_csv(plant_csv):
+        name = (plant.get("species") or "").strip()
+        if name not in wanted:
+            continue
+        for b, layers in profiles.items():
+            if name not in table[b]:
+                table[b][name] = _score_plant(plant, layers, default_root_depth)
+    return table

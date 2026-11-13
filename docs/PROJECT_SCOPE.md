@@ -66,21 +66,23 @@ Fellenoord is paved and about to be rebuilt. Street-tree schemes often fail belo
 |---|---|
 | Concept, KPIs, algorithm | Agreed |
 | Team split and timeline | On the Miro board |
-| Backend and dashboard | Runs on real Fellenoord data |
+| Backend and dashboard | Runs on real Fellenoord data, laid out in the Miro hierarchy: Inputs, 3D view with KPI bar, Outputs and graphs |
+| New outputs | Synergy index (team's ecosystem score), heat stress (route shade at 15:00), wind index (tree shelter at tall facades), existing canopy kept, canopy growth chart |
 | Sun hours | In the app: per 2 m cell and along the walking route |
 | Environment | `gsenv` on Python 3.13, with setup scripts and pinned versions (see [README](../README.md)) |
-| Git | Sun hours, the data scripts and the real layers are in the working folder on branch `test_1`, not committed yet |
-| Real data in the app | In: buildings (3D BAG), existing trees (Eindhoven open data), roads and green (OpenStreetMap). See [data/SOURCES.md](../data/SOURCES.md) |
+| Git | Branch `test_1`. The data reorganisation, soil matching, RIVM canopy, new outputs and layout are in the working folder, not committed yet |
+| Real data in the app | Buildings (3D BAG), existing canopy (RIVM Bomenkaart 2022), soil (6 BRO boreholes), roads, green and water (OpenStreetMap). Split into `data/raw/` and `data/processed/`; see [data/SOURCES.md](../data/SOURCES.md) |
 | Corridor outline and centreline | Draft generated from OpenStreetMap. **The architect needs to confirm or redraw it** |
-| Plant database | 55 more tree species extracted to `data/plants_candidates.csv`; none added yet because the database does not say which are native |
-| Tree class numbers | Placeholders in `backend/config.py`, to be confirmed |
+| Plant database | Species are matched to the soil at the nearest borehole. 55 more tree species are in `data/processed/plants_candidates.csv`; none added yet because the database does not say which are native |
+| Soil match | Real data, but it barely filters: only European white elm fails; the other 19 starter species fit every usable borehole. Boreholes are at the two ends of the route, none in the middle 400 m |
+| Tree class numbers | Placeholders in `backend/parameters.py`, to be confirmed |
 | Pitch and before/after image | Not started |
 
 ### Next three actions
 
 1. Architect checks the draft corridor on the map. To change it, draw one line at geojson.io, save it, and run `python scripts/fetch_data.py --centreline your_line.geojson`.
 2. Engineer replaces the placeholder tree class values and confirms the targets.
-3. Team marks the native species in `data/plants_candidates.csv` (set `native` to `yes`, fill in `family` and `common_name`), then runs `python scripts/build_plants.py --apply`.
+3. Team marks the native species in `data/processed/plants_candidates.csv` (set `native` to `yes`, fill in `family` and `common_name`), then runs `python scripts/build_plants.py --apply`.
 
 ## 4. KPIs and targets
 
@@ -229,7 +231,7 @@ Owners were assigned by discipline, not by name. The original handover times (12
 - Roads are today's layout. The planned narrowing of the road, which is what frees the planting space, is not in the data.
 - The starter plant table and the team database disagree on size for 10 of the 20 species (for example silver birch: medium in the table, 20 m and so large by the database). The engineer should decide which to follow.
 - OpenStreetMap's download servers were overloaded on 13 November; `scripts/fetch_data.py` retries, but may need a second run.
-- The 10% species rule is not met (largest share 17 to 20% on real data) because each size class has only six or seven species in the starter table. Approving more native species from `data/plants_candidates.csv` should fix it.
+- The 10-20-30 rule (Santamour) is now enforced and met for every option. The cost: trees whose size class has run out of species become medium or small, which lowers canopy cover by 1–4 points in 2040. More approved native species would reduce that cost.
 - Tree class sizes, growth rates and rooting volumes are placeholders.
 - Shade, gap and natural-soil targets are proposals, not sourced standards.
 - Collaborators have to be invited to the GitHub repo by hand (Settings, Collaborators).

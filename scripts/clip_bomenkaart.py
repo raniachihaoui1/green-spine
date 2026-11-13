@@ -3,11 +3,11 @@
 One-off preparation step; the app itself only needs numpy to read the output.
 Needs rasterio (not in requirements.txt):  pip install rasterio
 
-    python tools/clip_bomenkaart.py path/to/rivm_20231221_bomenkaart_2022.tif
-    python tools/clip_bomenkaart.py <tif> --corridor data/corridor.geojson --margin 300
+    python scripts/clip_bomenkaart.py path/to/rivm_20231221_bomenkaart_2022.tif
+    python scripts/clip_bomenkaart.py <tif> --corridor data/processed/corridor.geojson --margin 300
 
 Without --corridor it clips the default scope box (Kennedyplein to the Dommel, plus margin).
-Writes to data/:
+Writes to data/processed/:
     bomenkaart_2022_fellenoord.tif   clipped GeoTIFF (EPSG:28992), for QGIS
     bomenkaart_2022_fellenoord.npz   same grid as numpy array, read by the app
     scope_fellenoord.geojson         the clip box
@@ -30,7 +30,7 @@ def main():
     ap.add_argument("tif")
     ap.add_argument("--corridor", help="GeoJSON polygon in EPSG:28992; clip around its bounds")
     ap.add_argument("--margin", type=float, default=250.0, help="margin around the scope in metres")
-    ap.add_argument("--out", default="data")
+    ap.add_argument("--out", default="data/processed")
     a = ap.parse_args()
 
     if a.corridor:

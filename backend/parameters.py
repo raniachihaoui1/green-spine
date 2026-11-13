@@ -56,8 +56,10 @@ TREE_AVOID_CANOPIES = True     # no new trunk under a building canopy (crown wou
 CANOPY_MIN_COVER = 10.0        # ignore cells with less tree cover than this (%). STARTING VALUE
 CANOPY_CONTEXT_M = 50.0        # show existing canopy up to this distance outside the corridor (m). STARTING VALUE
 
-# 10-20-30 diversity rule (Santamour): max share per species, genus, family
+# 10-20-30 diversity rule. SOURCE: Santamour, F.S. (1990), Trees for urban planting: diversity, uniformity,
+# and common sense. At most 10 % of trees per species, 20 % per genus, 30 % per family.
 MAX_SPECIES, MAX_GENUS, MAX_FAMILY = 0.10, 0.20, 0.30
+ENFORCE_10_20_30 = True   # True: a tree steps down to a smaller size class rather than break the rule
 
 # =============================================================================
 # 4. Planting strategies (weights: heat, soil, gap)
@@ -111,7 +113,77 @@ DESIGN_RAIN_MM = 70.0                 # design storm for the rain proxy (mm in 2
 WALK_ZONE_HALF_WIDTH_M = 4.0          # walking zone either side of the centreline
 
 # =============================================================================
-# 8. KPI targets
+# 8. Ecosystem score (method: backend/metrics/ECOSYSTEM_SCORE.md)
+# =============================================================================
+# Weights of the four parts. They are normalised, so only their ratio matters.
+ECO_WEIGHTS = dict(habitat=0.25, diversity=0.25, connectivity=0.25, resilience=0.25)
+ECO_AGGREGATION = "arithmetic"        # "arithmetic" (weighted mean) or "geometric" (a weak part pulls the total down)
+
+# Sub-weights inside each part (each set sums to 1)
+ECO_HABITAT_W = dict(canopy=0.5, layered=0.3, unsealed=0.2)
+ECO_DIVERSITY_W = dict(shannon=0.4, native=0.3, wildlife=0.3)
+ECO_CONNECTIVITY_W = dict(gap=0.7, dommel=0.3)
+ECO_RESILIENCE_W = dict(natural_soil=0.6, survival=0.4)
+
+# Targets used to scale each indicator to 0-1
+ECO_CANOPY_TARGET_PCT = 30.0          # SOURCE: 3-30-300 rule
+ECO_UNSEALED_TARGET_PCT = 50.0        # SOURCE: cluster passport 1A, >= 50 % unsealed public space
+ECO_TREE_PIT_M2 = 9.0                 # unsealed tree pit per tree planted in paving (m2). STARTING VALUE
+ECO_GAP_ZERO_M = 100.0                # canopy gap (m) at which the connectivity score reaches 0
+ECO_DIVERSITY_RULE_STRICT = False     # True: diversity part = 0 when the 10-20-30 rule is broken;
+                                      # False: multiply by 0.5 instead (starter table is too small to pass)
+ECO_WILDLIFE_SHARE_DEFAULT = 0.5      # share of species with wildlife value when the plant table has no
+                                      # 'wildlife' column. STARTING VALUE, replace with the plant database
+SURVIVAL_NATURAL_SOIL = 0.85          # expected survival after 10 years in natural soil. STARTING VALUE (prompt)
+SURVIVAL_ENGINEERED_SOIL = 0.70       # expected survival after 10 years in engineered soil. STARTING VALUE
+
+# =============================================================================
+# 9. Sun study, heat stress and wind (backend/sun.py, backend/metrics/heat.py, wind.py)
+# =============================================================================
+DESIGN_DAY = (6, 21)        # month, day: summer solstice, the hottest sun geometry
+LAT, LON = 51.4437, 5.4800  # Fellenoord, Eindhoven
+SUN_STEP_H = 0.5            # time step in hours
+MIN_SUN_ALTITUDE = 10.0     # degrees; lower sun is ignored (very long shadows, little heat)
+CROWN_BASE, CROWN_TOP = 0.6, 1.8   # crown spans these multiples of its radius in height. STARTING VALUE
+ROUTE_STEP = 2.0            # metres between sample points on the walking route
+HEAT_CHECK_HOUR_LOCAL = 15.0   # heat-stress check: shade on the route at this local time (CEST). SOURCE: dashboard prompt KPI 2
+UTC_OFFSET_H = 2.0          # CEST in June
+WIND_TALL_BUILDING_M = 30.0 # wind index looks at buildings taller than this. STARTING VALUE (same as canopy threshold)
+WIND_SHELTER_REACH_M = 10.0 # a facade counts as sheltered with a canopy or tree crown within this distance. STARTING VALUE
+WIND_CORRIDOR_REACH_M = 30.0   # only facades within this distance of the corridor count. STARTING VALUE
+
+# =============================================================================
+# 10. Existing canopy protection and soil (RIVM Bomenkaart, BRO boreholes)
+# =============================================================================
+CANOPY_PROTECT_COVER = 30.0     # cells with at least this RIVM tree cover (%) keep their trees. STARTING VALUE (prompt 6.4)
+CANOPY_ROOT_BUFFER_M = 3.0      # no new trunk within crown + this distance of protected canopy. STARTING VALUE (prompt 6.4)
+SOIL_MIN_COMPATIBILITY = 0.6    # species must reach this soil-fit score at the nearest borehole (0-1). Teammate's script default
+SOIL_DEFAULT_ROOT_DEPTH_M = 1.0 # root depth used when the plant database has none. Teammate's script default
+
+# =============================================================================
+# 11. Data folders
+# =============================================================================
+RAW_DIR = "data/raw"            # as received; never edited
+PROCESSED_DIR = "data/processed"  # what the app reads; made by the scripts in scripts/ and backend/soil.py
+
+# =============================================================================
+# 12. Green facades (backend/facades.py) and water (backend/metrics/water.py)
+# =============================================================================
+FACADE_REACH_M = 15.0           # facades within this distance of the corridor count as street facades. STARTING VALUE
+FACADE_MIN_LENGTH_M = 4.0       # shorter wall segments are ignored (small jogs)
+FACADE_MAX_HEIGHT_M = 12.0      # ground-rooted climbers green up to about four floors. STARTING VALUE
+FACADE_BAND_M = 3.0             # facade is checked for sun per band of this height (one floor)
+FACADE_GREEN_SHARE_PCT = 50.0   # share of street facade length to green, sunniest walls first. User choice (slider)
+CLIMBER_MIN_HEIGHT_M = 2.5      # a climber must reach at least this height to count (from the plant database)
+CLIMBER_PREFERRED_HEIGHT_M = 6.0  # climbers reaching two floors are preferred, then species are spread. STARTING VALUE
+FACADE_SUN_FULL_H = 6.0         # >= this many sun hours on 21 June: wall needs a full-sun climber
+FACADE_SUN_PART_H = 3.0         # >= this: part shade; below: full shade
+
+CROWN_INTERCEPTION_MM = 1.5     # rain a tree crown holds per storm (mm over its area). STARTING VALUE
+INFILTRATION_MM = 50.0          # rain that open ground and tree pits soak up during the design storm (mm). STARTING VALUE
+
+# =============================================================================
+# 13. KPI targets
 # =============================================================================
 # Canopy 30% follows the 3-30-300 rule (SOURCE); the others are team proposals.
 TARGETS = {

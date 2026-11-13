@@ -7,7 +7,7 @@ Run from the repo root, inside gsenv:
 
 The --centreline file holds one LineString, in WGS84 (for example drawn at
 geojson.io) or in EPSG:28992; the script detects which. Everything written to
-data/ is in EPSG:28992. Sources and counts are recorded in data/SOURCES.md.
+data/processed/ is in EPSG:28992. Sources and counts are recorded in data/processed/fetch_report.md.
 """
 import argparse
 import datetime as dt
@@ -23,6 +23,9 @@ import shapely
 from pyproj import Transformer
 from shapely.geometry import LineString, Point, Polygon, mapping, shape
 from shapely.ops import polygonize, unary_union
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # repo root, for backend.parameters
+from backend.parameters import PROCESSED_DIR  # noqa: E402
 
 UA = "data-fetch-script/1.0"
 OVERPASS = ["https://overpass-api.de/api/interpreter",
@@ -228,7 +231,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--centreline", help="GeoJSON with one LineString drawn by the team (WGS84 or EPSG:28992)")
     ap.add_argument("--half-width", type=float, default=HALF_WIDTH, help="corridor half width in metres")
-    ap.add_argument("--out", default="data")
+    ap.add_argument("--out", default=PROCESSED_DIR)
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(exist_ok=True)
@@ -261,7 +264,7 @@ def main():
     write(out / "wet_zone.geojson", [(p, {}) for p in parts(wet)])
 
     in_corr = sum(corridor.contains(p) for p, _ in trees)
-    (out / "SOURCES.md").write_text(f"""# Data sources
+    (out / "fetch_report.md").write_text(f"""# Downloaded layers
 
 Written by `scripts/fetch_data.py` on {dt.date.today().isoformat()}. All layers are in EPSG:28992.
 
@@ -287,7 +290,7 @@ These are starting values set in `scripts/fetch_data.py`, not survey data.
 - No utilities layer: underground cables and pipes are not included.
 - Soil is not measured: OpenStreetMap green areas count as open ground, everything else as paved.
 """, encoding="utf-8")
-    print(f"Wrote 7 layers and SOURCES.md to {out}/")
+    print(f"Wrote 7 layers and fetch_report.md to {out}/")
 
 
 if __name__ == "__main__":

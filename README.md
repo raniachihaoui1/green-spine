@@ -76,7 +76,7 @@ The app opens at http://localhost:8501. Stop it with `Ctrl+C`; leave the environ
 
 ### Data
 
-The real Fellenoord layers are already in `data/`. To download them again, or to rebuild them around a corridor line you drew yourself (one line, for example from geojson.io):
+The real Fellenoord layers are already in `data/processed/`; raw inputs are in `data/raw/`. To download them again, or to rebuild them around a corridor line you drew yourself (one line, for example from geojson.io):
 
 ```bash
 python scripts/fetch_data.py
@@ -85,7 +85,9 @@ python scripts/fetch_data.py --centreline my_line.geojson
 
 Sources, licences and assumptions are listed in [data/SOURCES.md](data/SOURCES.md). The download needs internet; if OpenStreetMap is busy the script retries and may need a second run.
 
-To add tree species from `plant_database.csv`: run `python scripts/build_plants.py`, mark the native ones in `data/plants_candidates.csv`, then run `python scripts/build_plants.py --apply`.
+To add tree species from `data/raw/plants/plant_database.csv`: run `python scripts/build_plants.py`, mark the native ones in `data/processed/plants_candidates.csv`, then run `python scripts/build_plants.py --apply`.
+
+To rebuild the soil-compatible plant list from the BRO boreholes: `python -m backend.soil`.
 
 Project scope, method and status: [docs/PROJECT_SCOPE.md](docs/PROJECT_SCOPE.md).
 

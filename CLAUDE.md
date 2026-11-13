@@ -2,7 +2,7 @@
 
 Read this file before changing anything in the repo. It holds the requirements, conventions and status. Add a line to the **Change log** (section 9) after every change.
 
-Background, site facts, team and sources are in [docs/PROJECT_SCOPE.md](docs/PROJECT_SCOPE.md) and [docs/PROJECT_LOG.md](docs/PROJECT_LOG.md). This file merges in the full dashboard specification from `GreenSpine_dashboard_prompt.md` (section 6), adapted to this repo.
+Background, site facts, team and sources are in [docs/PROJECT_SCOPE.md](docs/PROJECT_SCOPE.md) and [docs/PROJECT_LOG.md](docs/PROJECT_LOG.md). This file merges in the full dashboard specification from `docs/GreenSpine_dashboard_prompt.md` (section 6), adapted to this repo.
 
 ---
 
@@ -18,26 +18,31 @@ Pitch: corridors succeed above ground and fail below it, and most schemes never 
 - Coordinates: RD New (EPSG:28992) internally; convert to WGS84 only for pydeck.
 - Code, identifiers, UI text and comments are in **English** (the repo convention). The original prompt asked for Dutch; the repo was built in English, so English stays unless the team decides otherwise.
 - Environment: `gsenv` on Python 3.13, `pip install -r requirements-lock.txt` (see README). When you add a package: add it to `requirements.txt` and refresh `requirements-lock.txt`.
-- Never modify the raw inputs (3D BAG tiles, the INPUTS folder, the plant database xlsx). Write derived files to `data/` or `Processed_data/`.
+- Data lives in two folders (paths in `parameters.py`): `data/raw/` as received, never edited; `data/processed/` what the app reads, made by a script. Every file is listed in [data/SOURCES.md](data/SOURCES.md). Add new raw data to `data/raw/<topic>/` and its derived file to `data/processed/`, and update SOURCES.md.
 - Never present invented geometry as real data. Label demo and assumed geometry "indicative" in the UI.
 - Keep `app.py` thin: computation goes in `backend/`. Cache heavy steps with `st.cache_data`, keyed on the parameters.
 - After each change, run `streamlit run app.py --server.headless true` and confirm that it starts without errors.
-- **Existing tree data is being analysed and clipped to the scope by the team. Do not touch the tree data or its loader until they hand it over.**
+- Existing canopy: the RIVM Bomenkaart 2022 (`data/processed/bomenkaart_2022_fellenoord.npz`) is the existing canopy in the model since 13 Nov, 15:00. The municipal tree points stay in `processed/` for reference and are not counted.
 
 ## 3. Repo layout
 
 | Path | Role |
 |---|---|
-| `app.py` | Streamlit dashboard: sidebar, option cards, 3D map, targets, covered ground, planting schedule |
+| `app.py` | Streamlit dashboard in three columns (Miro hierarchy): 1 Inputs, 2 3D view + KPI bar + option table, 3 Outputs and graphs; covered ground and Transparency below |
 | `backend/parameters.py` | **Every tunable parameter** |
 | `backend/config.py` | Backwards-compatible alias of `parameters.py` |
-| `backend/data_io.py` | Loads GeoJSON layers from `data/`; falls back to demo data |
+| `backend/data_io.py` | Loads GeoJSON layers and the RIVM raster from `data/processed/`; falls back to demo data |
+| `backend/bomenkaart.py` | RIVM Bomenkaart 2022 → existing canopy discs |
+| `backend/soil.py` | Team's soil match: plant texture and root depth vs. BRO borehole profiles; borehole positions and per-borehole scores |
+| `backend/sun.py` | Sun positions and shadows (buildings, crowns) |
 | `backend/demo_data.py` | Synthetic corridor, buildings, road, trees (indicative only) |
-| `backend/model.py` | Grid → mask (incl. tree setbacks) → score → place → species → growth → KPIs |
-| `backend/cover.py` | Building canopies, road pergola, covered-ground analysis |
-| `data/plants.csv` | Starter species table (20 native species) |
-| `Assets_inputs/` | Raw inputs: 3D BAG tiles, INPUTS folder, sketches. Read-only |
-| `docs/` | Project scope and log |
+| `backend/model.py` | Base grid (sun, canopy protection, nearest borehole) → setback mask → score → place → soil-matched species → growth → KPIs |
+| `backend/cover.py` | Building canopies and road pergola geometry |
+| `backend/metrics/` | One module + one .md per metric: covered ground (CANOPY.md), ecosystem/synergy (ECOSYSTEM_SCORE.md), heat stress (HEAT_STRESS.md), wind index (WIND_INDEX.md) |
+| `backend/view.py` | pydeck map layers |
+| `scripts/` | Data preparation: `fetch_data.py`, `clip_bomenkaart.py`, `build_plants.py` |
+| `data/raw/`, `data/processed/`, `data/SOURCES.md` | Raw inputs (read-only), app inputs, and the list of both |
+| `docs/` | Project scope, log, dashboard prompt |
 
 ## 4. Built shelter and setbacks (added 13 Nov 2026)
 
@@ -96,9 +101,10 @@ Counted inside the corridor:
 
 ## 5. Current state of the app
 
-- Runs on demo data until `corridor.geojson` and `centreline.geojson` are in `data/` (see 7).
+- Runs on real data (draft corridor) from `data/processed/`; falls back to demo data if `corridor.geojson` or `centreline.geojson` is missing (see 7).
 - Strategies: A Most shade, B Most connected, C Lowest cost, plus custom weights (heat, soil, gap).
-- KPIs live: canopy cover, shaded route, longest gap, trees in natural soil; plus tree count, species count, largest species share, engineered soil volume, and the covered-ground panel.
+- KPIs live: canopy cover, shaded route, longest gap, trees in natural soil (KPI bar under the map, with progress to target); synergy index (ecosystem score), heat stress (route shade at 15:00), wind index, existing canopy kept, canopy growth chart, species mix, engineered soil, largest species share; covered-ground panel.
+- Species are matched to the soil at the nearest usable BRO borehole (score ≥ `SOIL_MIN_COMPATIBILITY`); balance (10-20-30) first, soil fit as tiebreak, because the fit scores of the starter species are almost equal (0.91–0.92).
 - Exports: planting schedule CSV, KPI JSON.
 
 ## 6. Full specification (merged from `GreenSpine_dashboard_prompt.md`)
@@ -217,7 +223,7 @@ Policy card "Green requirement": 8 m² per new dwelling + 10 % of non-residentia
 
 ## 7. Switching to real data
 
-Put these in `data/` (EPSG:28992). Without `corridor.geojson` and `centreline.geojson` the app uses the demo corridor.
+Put these in `data/processed/` (EPSG:28992); `scripts/fetch_data.py` writes all of them. Without `corridor.geojson` and `centreline.geojson` the app uses the demo corridor.
 
 | File | Content | Required |
 |---|---|---|
@@ -226,7 +232,8 @@ Put these in `data/` (EPSG:28992). Without `corridor.geojson` and `centreline.ge
 | `buildings.geojson` | Polygons, property `height` (m); drives the canopies | Yes |
 | `road.geojson` | Carriageway polygons; drives the pergola and road setback | Yes |
 | `unpaved.geojson` | Open-ground polygons | Yes |
-| `trees_existing.geojson` | Points, `crown_radius` (m). Being prepared by the team | Yes |
+| `trees_existing.geojson` | Points, `crown_radius` (m). Used only when the RIVM raster is absent | No |
+| `bomenkaart_2022_fellenoord.npz` | RIVM tree cover raster (`scripts/clip_bomenkaart.py`) | No, but used when present |
 | `utilities.geojson`, `wet_zone.geojson` | Polygons | Optional |
 
 ## 8. Data still missing
@@ -235,7 +242,7 @@ Put these in `data/` (EPSG:28992). Without `corridor.geojson` and `centreline.ge
 |---|---|---|
 | Existing trees and green | Covered at canopy level by RIVM bomenkaart 2022; individual trees being prepared by the team | Eindhoven open data "Bomen", BGT via PDOK, AHN DSM−DTM |
 | Corridor route and planned green | Qualitative only (cluster passport 1A norms, no geometry) | Georeference the Ontwikkelvisie "raamwerk openbare ruimte" map in QGIS and digitise (~30 min) |
-| Soil and groundwater | Missing | BRO soil map + GHG; Fellenoord is one of the lowest areas in Eindhoven |
+| Soil and groundwater | 6 BRO boreholes in `data/raw/soil/` (two near the west end, four 114–422 m away near the Dommel; one starts at 0.8 m depth and is unusable). No groundwater | More BRO boreholes along the middle of the route; GHG |
 | Underground structures and utilities | Missing (KLIC not public) | Garages from cluster passports; otherwise the strip assumption |
 | Heat, flooding | Missing | Klimaateffectatlas |
 | Traffic and people flow | Missing | Municipality/NDW; otherwise station/footpath proxy |
@@ -249,3 +256,10 @@ Put these in `data/` (EPSG:28992). Without `corridor.geojson` and `centreline.ge
 | 13 Nov 2026 | Added `backend/parameters.py` as the single parameter file; `config.py` now re-exports it. |
 | 13 Nov 2026 | Added building canopies on buildings above a height threshold (width and corner extension parameters), road pergola (% of road width and length), tree setbacks from buildings and roads, and the covered-ground analysis (`backend/cover.py`, new dashboard panel and sidebar sections). |
 | 13 Nov 2026 | Created this CLAUDE.md, merging `GreenSpine_dashboard_prompt.md`. |
+| 13 Nov 2026 | Repaired the 14:16 merge: `config.py` re-exports `parameters.py` again; sun settings moved into `parameters.py` (section 9); setbacks, canopies, pergola and covered ground back in the app next to sun hours. |
+| 13 Nov 2026 | Split data into `data/raw/` and `data/processed/` (git renames; paths in `parameters.py`, section 11). `tools/` merged into `scripts/`; `plant_fellenoord_compatibility.py` → `backend/soil.py` (paths fixed, output name corrected to `fellenoord_compatible_plants.csv`; reproduces the committed file exactly); calculation .md files → `backend/metrics/`. |
+| 13 Nov 2026 | Model uses the RIVM canopy (shadows, gap score, canopy %, protection ≥ 30% cover + 3 m root zone, "existing canopy kept") and the soil match per nearest borehole (species filter, `soil_fit` in the schedule). Sun hours and setback distances are computed once in `base_grid`, so setback sliders only mask. |
+| 13 Nov 2026 | Added `backend/metrics/` from the team's zip (ecosystem score, covered ground) plus heat stress and wind index (with .md files). Building footprints are merged once at load (`L["bld_union"]`). |
+| 13 Nov 2026 | Dashboard rebuilt to the Miro hierarchy (three columns), map layers in `backend/view.py`, Transparency panel. |
+| 13 Nov 2026 | Green facades (`backend/facades.py`, GREEN_FACADES.md): climbers from the soil-compatible list on street walls, sunniest first, matched to sun per floor band. Rain kept on site (`backend/metrics/water.py`, WATER.md). Dashboard simplified: 1 Choose / 2 See / 3 Results, six headline numbers, details in tabs, expert settings under Advanced. |
+| 13 Nov 2026 | Santamour's 10-20-30 rule enforced (`ENFORCE_10_20_30`, Inputs switch): limits rounded down; a tree changes size class (smaller first, larger only if spacing allows) rather than break the rule. Met for all options at 20–200 trees; costs 1–4 points of canopy in 2040. New 10-20-30 table in Outputs; `class_changed_for_10_20_30` column in the schedule. |
